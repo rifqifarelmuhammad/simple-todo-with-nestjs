@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @default(uuid()) @id
+  email String @unique
+  password String?
+  firebaseId String? @unique
+  name String?
+  avatar String?
+  createdAt DateTime @db.Timestamptz() @default(now())
+  updatedAt DateTime @db.Timestamptz() @updatedAt 
+  lastLogin DateTime @db.Timestamptz() @default(now())
+  token Token[]
+  todos Todo[]
+
+  @@index([id, email])
+}
+
+model Token {
+  id String @default(uuid()) @id
+  accessToken String @unique
+  blacklistStatus BlacklistStatus @default(ACTIVE)
+  createdAt DateTime @db.Timestamptz() @default(now())
+  updatedAt DateTime @db.Timestamptz() @updatedAt
+  expiredAt DateTime @db.Timestamptz()
+  blacklistedAt DateTime? @db.Timestamptz()
+  userId String 
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, blacklistStatus])
+}
+
+enum BlacklistStatus {
+  ACTIVE 
+  BLACKLISTED 
+}
+
+model Todo {
+  id String @default(uuid()) @id
+  title String
+  description String?
+  isFinished Boolean @default(false)
+  createdAt DateTime @db.Timestamptz() @default(now())
+  updatedAt DateTime @db.Timestamptz() @updatedAt
+  userId String 
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Trash {
+  id String @default(uuid()) @id
+  key TrashKey
+  content Json
+  createdAt DateTime @db.Timestamptz() @default(now())
+  updatedAt DateTime @db.Timestamptz() @updatedAt
+}
+
+enum TrashKey {
+  TODO
+}

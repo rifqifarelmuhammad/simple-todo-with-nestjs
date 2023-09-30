@@ -1,0 +1,13 @@
+node_modules
+dist
+tsconfig.json
+tsconfig.build.json
+.eslintrc.js
+.vscode/*
+yarn.lock
+test/**/*.json
+README.md
+.prettierrc
+nest-cli.json
+package.json
+package-lock.json
