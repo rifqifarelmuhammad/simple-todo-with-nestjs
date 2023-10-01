@@ -9,7 +9,7 @@ export class TodoService {
 
     async getAllTodoDesc(user: User) {
         const { id } = user
-        return await this.prisma.todo.findMany({
+        const todos = await this.prisma.todo.findMany({
             where: {
                 userId: id
             },
@@ -24,11 +24,13 @@ export class TodoService {
                 updatedAt: 'desc'
             }
         })
+
+        return {'todos': todos}
     }
 
     async getAllTodoAsc(user: User) {
         const { id } = user
-        return await this.prisma.todo.findMany({
+        const todos = await this.prisma.todo.findMany({
             where: {
                 userId: id
             },
@@ -43,11 +45,13 @@ export class TodoService {
                 updatedAt: 'asc'
             }
         })
+
+        return {'todos': todos}
     }
 
     async getAllTodoFinished(user: User) {
         const { id } = user
-        return await this.prisma.todo.findMany({
+        const todos = await this.prisma.todo.findMany({
             where: {
                 userId: id,
                 isFinished: true
@@ -60,11 +64,13 @@ export class TodoService {
                 updatedAt: true
             },
         })
+
+        return {'todos': todos}
     }
 
     async getAllTodoNotFinished(user: User) {
         const { id } = user
-        return await this.prisma.todo.findMany({
+        const todos = await this.prisma.todo.findMany({
             where: {
                 userId: id,
                 isFinished: false
@@ -77,6 +83,8 @@ export class TodoService {
                 updatedAt: true
             },
         })
+
+        return {'todos': todos}
     }
 
     async createTodo(user: User, {title, description}: CreateTodoDTO) {
