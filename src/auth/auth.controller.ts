@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common'
+import { Body, Controller, HttpCode, HttpStatus, Patch, Post, Get } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { ResponseUtil } from 'src/common/utils/response.util'
 import { LoginDTO, LogoutDTO, RegistrationDTO } from './auth.DTO'
@@ -48,5 +48,13 @@ export class AuthController {
     return this.responseUtil.response({
       responseMessage: 'Logout Successful'
     })
+  }
+
+  @Get('user')
+  @HttpCode(HttpStatus.OK)
+  async getUser(@GetCurrentUser() user: User) {
+    const responseData = this.authService.getFinalizeUser(user)
+    
+    return this.responseUtil.response({}, {'user': responseData})
   }
 }

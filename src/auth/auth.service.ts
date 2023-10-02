@@ -5,6 +5,7 @@ import { LoginDTO, LogoutDTO, RegistrationDTO } from './auth.DTO'
 import { hash, compare } from 'bcrypt'
 import { User } from '@prisma/client'
 import { TIME_UNIT } from './auth.constant'
+import { FinalizeUser } from './auth.interface'
 
 @Injectable()
 export class AuthService {
@@ -59,7 +60,8 @@ export class AuthService {
         const accessToken = await this.generateToken(user.id)
 
         return {
-            'accessToken': accessToken
+            'accessToken': accessToken,
+            'user': this.getFinalizeUser(user)
         }
     }
 
@@ -102,7 +104,8 @@ export class AuthService {
         })
 
         return {
-            'accessToken': accessToken
+            'accessToken': accessToken,
+            'user': this.getFinalizeUser(user)
         }
     }
 
@@ -110,6 +113,17 @@ export class AuthService {
         await this.blacklistToken(token)
     }
 
+    getFinalizeUser(user: User) {
+        const avatar = (user.avatar ? user.avatar : process.env.CLOUDINARY_DEFAULT_AVATAR)
+
+        const finalizeUser: FinalizeUser = {
+            name: user.name,
+            avatar: avatar
+        }
+
+        return finalizeUser
+    }
+    
     private async generateToken(key: string) {
         const accessToken = await this.jwtService.signAsync(
             { key },
@@ -149,4 +163,5 @@ export class AuthService {
         const unit = expiry[expiry.length - 1]
         return duration * TIME_UNIT[unit]
     }
+
 }

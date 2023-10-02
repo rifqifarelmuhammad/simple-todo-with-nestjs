@@ -34,7 +34,8 @@ export class UserService {
 
         let uploadedFile: UploadApiResponse | UploadApiErrorResponse
         if (file) {
-            const fileType = file.originalname.split('.')[1]
+            const splitedFileName = file.originalname.split('.')
+            const fileType = splitedFileName[splitedFileName.length - 1]
             
             if (!IMAGE_FILE_TYPE.includes(fileType)) {
                 throw new BadRequestException('Invalid file type')
@@ -46,10 +47,10 @@ export class UserService {
         }
 
         const { id, avatar } = user
-        if (isAvatarDeleted || file) {
-            await this.cloudinary.deleteFile(avatar)
+        if ((isAvatarDeleted || file) && avatar) {
+            const public_id = avatar.split('.')[0]
+            await this.cloudinary.deleteFile(public_id)
         }
-        
 
         return await this.prisma.user.update({
             where: {
@@ -57,7 +58,7 @@ export class UserService {
             },
             data: {
                 ...(name ? { name: name } : {}),
-                ...(isAvatarDeleted ? { avatar: null } : file ? { avatar: uploadedFile.public_id } : {})
+                ...(isAvatarDeleted ? { avatar: null } : file ? { avatar: `${uploadedFile.public_id}.${uploadedFile.format}` } : {})
             },
             select: {
                 avatar: true,
