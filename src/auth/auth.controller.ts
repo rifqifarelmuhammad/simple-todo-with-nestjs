@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Patch, Post, Get } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  Get,
+} from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { ResponseUtil } from 'src/common/utils/response.util'
 import { LoginDTO, LogoutDTO, RegistrationDTO } from './auth.DTO'
@@ -12,18 +20,19 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly responseUtil: ResponseUtil
   ) {}
-  
+
   @IsPublic()
   @Post('registration')
   @HttpCode(HttpStatus.CREATED)
   async registration(@Body() body: RegistrationDTO) {
     const responseData = await this.authService.registration(body)
 
-    return this.responseUtil.response({
-      responseMessage: 'User successfully registered',
-      responseCode: HttpStatus.CREATED,
-    },
-    responseData
+    return this.responseUtil.response(
+      {
+        responseMessage: 'User successfully registered',
+        responseCode: HttpStatus.CREATED,
+      },
+      responseData
     )
   }
 
@@ -33,10 +42,11 @@ export class AuthController {
   async login(@Body() body: LoginDTO) {
     const responseData = await this.authService.login(body)
 
-    return this.responseUtil.response({
-      responseMessage: 'Login Successful'
-    },
-    responseData
+    return this.responseUtil.response(
+      {
+        responseMessage: 'Login Successful',
+      },
+      responseData
     )
   }
 
@@ -46,7 +56,7 @@ export class AuthController {
     await this.authService.logout(body)
 
     return this.responseUtil.response({
-      responseMessage: 'Logout Successful'
+      responseMessage: 'Logout Successful',
     })
   }
 
@@ -54,7 +64,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async getUser(@GetCurrentUser() user: User) {
     const responseData = this.authService.getFinalizeUser(user)
-    
-    return this.responseUtil.response({}, {'user': responseData})
+
+    return this.responseUtil.response({}, { user: responseData })
   }
 }

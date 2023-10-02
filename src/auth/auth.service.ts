@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, UnauthorizedException, Injectable } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  UnauthorizedException,
+  Injectable,
+} from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { LoginDTO, LogoutDTO, RegistrationDTO } from './auth.DTO'
@@ -9,159 +14,158 @@ import { FinalizeUser } from './auth.interface'
 
 @Injectable()
 export class AuthService {
-    constructor(
-        private jwtService: JwtService,
-        private readonly prisma: PrismaService,
-    ) {}
+  constructor(
+    private jwtService: JwtService,
+    private readonly prisma: PrismaService
+  ) {}
 
-    async registration({
-        name,
+  async registration({
+    name,
+    email,
+    password,
+    confirmationPassword,
+  }: RegistrationDTO) {
+    if (password !== confirmationPassword) {
+      throw new BadRequestException(
+        'Password does not match confirmation password'
+      )
+    }
+
+    const lowerCasedEmail = email.toLowerCase()
+
+    const disposableEmails: string[] = process.env.DISPOSABLE_EMAILS.split(',')
+
+    const emailDomain = lowerCasedEmail.split('@')[1]
+
+    if (!disposableEmails.includes(emailDomain)) {
+      throw new BadRequestException('Invalid email address')
+    }
+
+    const isUserExists = await this.prisma.user.findUnique({
+      where: {
+        email: lowerCasedEmail,
+      },
+    })
+
+    if (isUserExists) {
+      throw new ConflictException('User already exists')
+    }
+
+    const hashedPassword = await hash(
+      password,
+      parseInt(process.env.APP_SALT_ROUNDS)
+    )
+
+    const user = await this.prisma.user.create({
+      data: {
+        name: name,
+        email: lowerCasedEmail,
+        password: hashedPassword,
+      },
+    })
+
+    const accessToken = await this.generateToken(user.id)
+
+    return {
+      accessToken: accessToken,
+      user: this.getFinalizeUser(user),
+    }
+  }
+
+  async login({ email, password, token }: LoginDTO) {
+    const user = await this.prisma.user.findUnique({
+      where: {
         email,
-        password,
-        confirmationPassword
-    }: RegistrationDTO) {
-        if (password !== confirmationPassword) {
-            throw new BadRequestException('Password does not match confirmation password')
-        }
+      },
+    })
 
-        const lowerCasedEmail = email.toLowerCase()
-
-        const disposableEmails: string[] = process.env.DISPOSABLE_EMAILS.split(',')
-
-        const emailDomain = lowerCasedEmail.split('@')[1]
-
-        if (!disposableEmails.includes(emailDomain)) {
-            throw new BadRequestException('Invalid email address')
-        }
-
-        const isUserExists = await this.prisma.user.findUnique({
-            where: {
-              email: lowerCasedEmail,
-            },
-        })
-
-        if (isUserExists) {
-            throw new ConflictException('User already exists')
-        }
-
-        const hashedPassword = await hash (
-            password,
-            parseInt(process.env.APP_SALT_ROUNDS)
-        )
-        
-        const user = await this.prisma.user.create({
-            data: {
-                name: name,
-                email: lowerCasedEmail,
-                password: hashedPassword
-            }
-        })
-
-        const accessToken = await this.generateToken(user.id)
-
-        return {
-            'accessToken': accessToken,
-            'user': this.getFinalizeUser(user)
-        }
+    if (!user) {
+      throw new UnauthorizedException('Invalid Email or Password')
     }
 
-    async login({
-        email,
-        password,
-        token
-    }: LoginDTO) {
-        const user = await this.prisma.user.findUnique({
-            where: {
-              email,
-            },
-        })
-      
-        if (!user) {
-            throw new UnauthorizedException('Invalid Email or Password')
-        }
+    const isPasswordValid = await compare(password, user.password)
 
-        const isPasswordValid = await compare(password, user.password)
-
-        if (!isPasswordValid) {
-            throw new UnauthorizedException('Invalid Email or Password')
-        }
-
-        const { id } = user
-
-        if (token) {
-            await this.blacklistToken(token)
-        }
-
-        const accessToken = await this.generateToken(id)
-
-        await this.prisma.user.update({
-            where: {
-                id: id
-            },
-            data: {
-                lastLogin: new Date()
-            }
-        })
-
-        return {
-            'accessToken': accessToken,
-            'user': this.getFinalizeUser(user)
-        }
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid Email or Password')
     }
 
-    async logout({ token }: LogoutDTO) {
-        await this.blacklistToken(token)
+    const { id } = user
+
+    if (token) {
+      await this.blacklistToken(token)
     }
 
-    getFinalizeUser(user: User) {
-        const avatar = (user.avatar ? user.avatar : process.env.CLOUDINARY_DEFAULT_AVATAR)
+    const accessToken = await this.generateToken(id)
 
-        const finalizeUser: FinalizeUser = {
-            name: user.name,
-            avatar: avatar
-        }
+    await this.prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        lastLogin: new Date(),
+      },
+    })
 
-        return finalizeUser
+    return {
+      accessToken: accessToken,
+      user: this.getFinalizeUser(user),
     }
-    
-    private async generateToken(key: string) {
-        const accessToken = await this.jwtService.signAsync(
-            { key },
-            {
-                secret: process.env.APP_ACCESS_SECRET,
-                expiresIn: process.env.APP_ACCESS_EXPIRY
-            }
-        )
+  }
 
-        await this.prisma.token.create({
-            data: {
-                accessToken: accessToken,
-                expiredAt: new Date(
-                    Date.now() + this.getExpiry(process.env.APP_ACCESS_EXPIRY)
-                ),
-                userId: key
-            }
-        })
+  async logout({ token }: LogoutDTO) {
+    await this.blacklistToken(token)
+  }
 
-        return accessToken
+  getFinalizeUser(user: User) {
+    const avatar = user.avatar
+      ? user.avatar
+      : process.env.CLOUDINARY_DEFAULT_AVATAR
+
+    const finalizeUser: FinalizeUser = {
+      name: user.name,
+      avatar: avatar,
     }
 
-    private async blacklistToken(tokenId: string) {
-        await this.prisma.token.update({
-            where: {
-                accessToken: tokenId
-            },
-            data: {
-                blacklistStatus: 'BLACKLISTED',
-                blacklistedAt: new Date()
-            }
-        })
-    }
+    return finalizeUser
+  }
 
-    private getExpiry(expiry: string) {
-        const duration = parseInt(expiry.substring(0, expiry.length - 1))
-        const unit = expiry[expiry.length - 1]
-        return duration * TIME_UNIT[unit]
-    }
+  private async generateToken(key: string) {
+    const accessToken = await this.jwtService.signAsync(
+      { key },
+      {
+        secret: process.env.APP_ACCESS_SECRET,
+        expiresIn: process.env.APP_ACCESS_EXPIRY,
+      }
+    )
 
+    await this.prisma.token.create({
+      data: {
+        accessToken: accessToken,
+        expiredAt: new Date(
+          Date.now() + this.getExpiry(process.env.APP_ACCESS_EXPIRY)
+        ),
+        userId: key,
+      },
+    })
+
+    return accessToken
+  }
+
+  private async blacklistToken(tokenId: string) {
+    await this.prisma.token.update({
+      where: {
+        accessToken: tokenId,
+      },
+      data: {
+        blacklistStatus: 'BLACKLISTED',
+        blacklistedAt: new Date(),
+      },
+    })
+  }
+
+  private getExpiry(expiry: string) {
+    const duration = parseInt(expiry.substring(0, expiry.length - 1))
+    const unit = expiry[expiry.length - 1]
+    return duration * TIME_UNIT[unit]
+  }
 }
