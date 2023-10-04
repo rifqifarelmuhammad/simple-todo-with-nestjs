@@ -17,20 +17,6 @@ export class UserService {
     private readonly cloudinary: CloudinaryService
   ) {}
 
-  async getProfile(user: User) {
-    const { id } = user
-    return await this.prisma.user.findUnique({
-      where: {
-        id: id,
-      },
-      select: {
-        avatar: true,
-        name: true,
-        email: true,
-      },
-    })
-  }
-
   async updateProfile(
     user: User,
     file: Express.Multer.File,

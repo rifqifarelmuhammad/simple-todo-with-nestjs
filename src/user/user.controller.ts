@@ -1,6 +1,5 @@
 import {
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Patch,
@@ -23,14 +22,6 @@ export class UserController {
     private readonly userService: UserService,
     private readonly responseUtil: ResponseUtil
   ) {}
-
-  @Get('profile')
-  @HttpCode(HttpStatus.OK)
-  async getProfile(@GetCurrentUser() user: User) {
-    const responseData = await this.userService.getProfile(user)
-
-    return this.responseUtil.response({}, responseData)
-  }
 
   @Patch('profile')
   @UseInterceptors(FileInterceptor('file'))
