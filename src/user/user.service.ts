@@ -22,7 +22,7 @@ export class UserService {
     file: Express.Multer.File,
     { name, isAvatarDeleted }: UpdateProfileDTO
   ) {
-    if (!file && !name && !isAvatarDeleted) {
+    if (!file && !name && isAvatarDeleted === 'FALSE') {
       throw new BadRequestException('Avatar and Name cannot be empty')
     }
 
@@ -41,7 +41,7 @@ export class UserService {
     }
 
     const { id, avatar } = user
-    if ((isAvatarDeleted || file) && avatar) {
+    if ((isAvatarDeleted === 'TRUE' || file) && avatar) {
       const publicId = avatar.split('.')[0]
       await this.cloudinary.deleteFile(publicId)
     }
@@ -52,7 +52,7 @@ export class UserService {
       },
       data: {
         ...(name ? { name: name } : {}),
-        ...(isAvatarDeleted
+        ...(isAvatarDeleted === 'TRUE'
           ? { avatar: null }
           : file
           ? { avatar: `${uploadedFile.public_id}.${uploadedFile.format}` }

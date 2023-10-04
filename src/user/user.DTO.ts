@@ -6,6 +6,6 @@ export class UpdateProfileDTO {
   name: string
 
   @IsNotEmpty()
-  @IsBoolean()
-  isAvatarDeleted: boolean
+  @IsString()
+  isAvatarDeleted: string
 }

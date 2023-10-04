@@ -22,8 +22,9 @@ export class AuthGuard implements CanActivate {
   async canActivate(ctx: ExecutionContext) {
     const req = ctx.switchToHttp().getRequest<AuthenticatedRequestInterface>()
 
-    const rawToken = req.headers.authorization.split(' ')[1]
+    let rawToken = req.headers.authorization
     if (rawToken) {
+      rawToken = rawToken.split(' ')[1]
       req.body.token = rawToken
     }
 
