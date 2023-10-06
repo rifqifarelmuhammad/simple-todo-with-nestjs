@@ -10,7 +10,6 @@ import { LoginDTO, LogoutDTO, RegistrationDTO } from './auth.DTO'
 import { hash, compare } from 'bcrypt'
 import { User } from '@prisma/client'
 import { TIME_UNIT } from './auth.constant'
-import { FinalizeUser } from './auth.interface'
 import { GetFinalizeUserUtil } from 'src/common/utils/getFinalizeUser.util'
 
 @Injectable()

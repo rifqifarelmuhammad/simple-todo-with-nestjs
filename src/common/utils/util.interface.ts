@@ -5,3 +5,8 @@ export interface ResponseInterface {
   responseMessage?: string
   responseStatus?: 'SUCCESS' | 'FAILED'
 }
+
+export interface FinalizeUser {
+  name: string
+  avatar: string
+}

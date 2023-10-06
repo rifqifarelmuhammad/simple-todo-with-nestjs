@@ -22,13 +22,21 @@ export class TodoController {
     private readonly todoService: TodoService,
     private readonly responseUtil: ResponseUtil
   ) {}
-  
+
   @Get()
   @HttpCode(HttpStatus.OK)
-  async getAllTodos(@GetCurrentUser() user: User, @Query('orderBy') orderBy: string, @Query('filter') filter: string) {
-    const responseData = await this.todoService.getAllTodos(user, orderBy, filter)
+  async getAllTodos(
+    @GetCurrentUser() user: User,
+    @Query('orderBy') orderBy: string,
+    @Query('filter') filter: string
+  ) {
+    const responseData = await this.todoService.getAllTodos(
+      user,
+      orderBy,
+      filter
+    )
 
-    return this.responseUtil.response({}, {'todos': responseData})
+    return this.responseUtil.response({}, { todos: responseData })
   }
 
   @Post()

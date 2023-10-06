@@ -13,17 +13,21 @@ export class TodoService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAllTodos(user: User, orderBy: string, filter: string) {
-    if ((orderBy && !TYPE_ORDER.includes(orderBy)) || (filter && !TYPE_FILTER.includes(filter))) {
+    if (
+      (orderBy && !TYPE_ORDER.includes(orderBy)) ||
+      (filter && !TYPE_FILTER.includes(filter))
+    ) {
       throw new BadRequestException('Invalid query')
     }
 
     const { id } = user
-    const typeOrder: Prisma.SortOrder = orderBy === TYPE_ORDER[1] ? 'asc' : 'desc'
+    const typeOrder: Prisma.SortOrder =
+      orderBy === TYPE_ORDER[1] ? 'asc' : 'desc'
     const typeFilter = filter === TYPE_FILTER[0]
     const todos = await this.prisma.todo.findMany({
       where: {
         userId: id,
-        ...(filter ? {isFinished: typeFilter} : {})
+        ...(filter ? { isFinished: typeFilter } : {}),
       },
       select: {
         id: true,
@@ -33,11 +37,11 @@ export class TodoService {
         updatedAt: true,
       },
       orderBy: {
-        updatedAt: typeOrder
-      }
+        updatedAt: typeOrder,
+      },
     })
 
-    return {'todos': todos}
+    return { todos: todos }
   }
 
   async createTodo(user: User, { title, description }: CreateTodoDTO) {

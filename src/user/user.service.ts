@@ -62,6 +62,6 @@ export class UserService {
       },
     })
 
-    return {'user': this.getFinalizeUserUtil.getFinalizeUser(updatedUser)}
+    return { user: this.getFinalizeUserUtil.getFinalizeUser(updatedUser) }
   }
 }
