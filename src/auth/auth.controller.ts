@@ -63,7 +63,7 @@ export class AuthController {
   @Get('user')
   @HttpCode(HttpStatus.OK)
   async getUser(@GetCurrentUser() user: User) {
-    const responseData = this.getUser(user)
+    const responseData = this.authService.getUser(user)
 
     return this.responseUtil.response({}, { user: responseData })
   }
