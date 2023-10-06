@@ -9,12 +9,14 @@ import { UpdateProfileDTO } from './user.DTO'
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service'
 import { UploadApiErrorResponse, UploadApiResponse } from 'cloudinary'
 import { IMAGE_FILE_TYPE } from './user.constant'
+import { GetFinalizeUserUtil } from 'src/common/utils/getFinalizeUser.util'
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudinary: CloudinaryService
+    private readonly cloudinary: CloudinaryService,
+    private readonly getFinalizeUserUtil: GetFinalizeUserUtil
   ) {}
 
   async updateProfile(
@@ -46,7 +48,7 @@ export class UserService {
       await this.cloudinary.deleteFile(publicId)
     }
 
-    return await this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: {
         id: id,
       },
@@ -58,10 +60,8 @@ export class UserService {
           ? { avatar: `${uploadedFile.public_id}.${uploadedFile.format}` }
           : {}),
       },
-      select: {
-        avatar: true,
-        name: true,
-      },
     })
+
+    return {'user': this.getFinalizeUserUtil.getFinalizeUser(updatedUser)}
   }
 }

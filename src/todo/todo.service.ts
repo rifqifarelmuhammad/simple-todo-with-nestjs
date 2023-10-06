@@ -3,19 +3,27 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common'
-import { Todo, User } from '@prisma/client'
+import { Prisma, Todo, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { CreateTodoDTO, UpdateIsFinishedDTO } from './todo.DTO'
+import { TYPE_FILTER, TYPE_ORDER } from './todo.constant'
 
 @Injectable()
 export class TodoService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAllTodoDesc(user: User) {
+  async getAllTodos(user: User, orderBy: string, filter: string) {
+    if ((orderBy && !TYPE_ORDER.includes(orderBy)) || (filter && !TYPE_FILTER.includes(filter))) {
+      throw new BadRequestException('Invalid query')
+    }
+
     const { id } = user
+    const typeOrder: Prisma.SortOrder = orderBy === TYPE_ORDER[1] ? 'asc' : 'desc'
+    const typeFilter = filter === TYPE_FILTER[0]
     const todos = await this.prisma.todo.findMany({
       where: {
         userId: id,
+        ...(filter ? {isFinished: typeFilter} : {})
       },
       select: {
         id: true,
@@ -25,70 +33,11 @@ export class TodoService {
         updatedAt: true,
       },
       orderBy: {
-        updatedAt: 'desc',
-      },
+        updatedAt: typeOrder
+      }
     })
 
-    return { todos: todos }
-  }
-
-  async getAllTodoAsc(user: User) {
-    const { id } = user
-    const todos = await this.prisma.todo.findMany({
-      where: {
-        userId: id,
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        isFinished: true,
-        updatedAt: true,
-      },
-      orderBy: {
-        updatedAt: 'asc',
-      },
-    })
-
-    return { todos: todos }
-  }
-
-  async getAllTodoFinished(user: User) {
-    const { id } = user
-    const todos = await this.prisma.todo.findMany({
-      where: {
-        userId: id,
-        isFinished: true,
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        isFinished: true,
-        updatedAt: true,
-      },
-    })
-
-    return { todos: todos }
-  }
-
-  async getAllTodoNotFinished(user: User) {
-    const { id } = user
-    const todos = await this.prisma.todo.findMany({
-      where: {
-        userId: id,
-        isFinished: false,
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        isFinished: true,
-        updatedAt: true,
-      },
-    })
-
-    return { todos: todos }
+    return {'todos': todos}
   }
 
   async createTodo(user: User, { title, description }: CreateTodoDTO) {

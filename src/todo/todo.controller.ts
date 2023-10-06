@@ -8,6 +8,7 @@ import {
   Patch,
   Delete,
   Param,
+  Query,
 } from '@nestjs/common'
 import { TodoService } from './todo.service'
 import { ResponseUtil } from 'src/common/utils/response.util'
@@ -21,37 +22,13 @@ export class TodoController {
     private readonly todoService: TodoService,
     private readonly responseUtil: ResponseUtil
   ) {}
-
-  @Get('desc')
+  
+  @Get()
   @HttpCode(HttpStatus.OK)
-  async getAllTodoDesc(@GetCurrentUser() user: User) {
-    const responseData = await this.todoService.getAllTodoDesc(user)
+  async getAllTodos(@GetCurrentUser() user: User, @Query('orderBy') orderBy: string, @Query('filter') filter: string) {
+    const responseData = await this.todoService.getAllTodos(user, orderBy, filter)
 
-    return this.responseUtil.response({}, responseData)
-  }
-
-  @Get('asc')
-  @HttpCode(HttpStatus.OK)
-  async getAllTodoAsc(@GetCurrentUser() user: User) {
-    const responseData = await this.todoService.getAllTodoAsc(user)
-
-    return this.responseUtil.response({}, responseData)
-  }
-
-  @Get('is-finished')
-  @HttpCode(HttpStatus.OK)
-  async getAllTodoFinished(@GetCurrentUser() user: User) {
-    const responseData = await this.todoService.getAllTodoFinished(user)
-
-    return this.responseUtil.response({}, responseData)
-  }
-
-  @Get('not-finished')
-  @HttpCode(HttpStatus.OK)
-  async getAllTodoNotFinished(@GetCurrentUser() user: User) {
-    const responseData = await this.todoService.getAllTodoNotFinished(user)
-
-    return this.responseUtil.response({}, responseData)
+    return this.responseUtil.response({}, {'todos': responseData})
   }
 
   @Post()

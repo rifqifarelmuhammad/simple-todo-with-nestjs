@@ -11,12 +11,14 @@ import { hash, compare } from 'bcrypt'
 import { User } from '@prisma/client'
 import { TIME_UNIT } from './auth.constant'
 import { FinalizeUser } from './auth.interface'
+import { GetFinalizeUserUtil } from 'src/common/utils/getFinalizeUser.util'
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    private readonly getFinalizeUserUtil: GetFinalizeUserUtil
   ) {}
 
   async registration({
@@ -68,7 +70,7 @@ export class AuthService {
 
     return {
       accessToken: accessToken,
-      user: this.getFinalizeUser(user),
+      user: this.getFinalizeUserUtil.getFinalizeUser(user),
     }
   }
 
@@ -108,7 +110,7 @@ export class AuthService {
 
     return {
       accessToken: accessToken,
-      user: this.getFinalizeUser(user),
+      user: this.getFinalizeUserUtil.getFinalizeUser(user),
     }
   }
 
@@ -116,17 +118,8 @@ export class AuthService {
     await this.blacklistToken(token)
   }
 
-  getFinalizeUser(user: User) {
-    const avatar = user.avatar
-      ? user.avatar
-      : process.env.CLOUDINARY_DEFAULT_AVATAR
-
-    const finalizeUser: FinalizeUser = {
-      name: user.name,
-      avatar: avatar,
-    }
-
-    return finalizeUser
+  getUser(user: User) {
+    return this.getFinalizeUserUtil.getFinalizeUser(user)
   }
 
   private async generateToken(key: string) {
