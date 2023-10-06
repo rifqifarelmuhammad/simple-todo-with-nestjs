@@ -36,7 +36,7 @@ export class TodoController {
       filter
     )
 
-    return this.responseUtil.response({}, { todos: responseData })
+    return this.responseUtil.response({}, responseData)
   }
 
   @Post()
