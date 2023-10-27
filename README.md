@@ -3,8 +3,6 @@ This program contains CRUD data and CRUD files (image).
 
 ## Technology Stack
 [![Tech Stacks](https://skillicons.dev/icons?i=nestjs,ts,prisma,postgres)](https://skillicons.dev)
-
-### Other Technology Stack:
 - Cloudinary
 
 ## How to Run the Program
